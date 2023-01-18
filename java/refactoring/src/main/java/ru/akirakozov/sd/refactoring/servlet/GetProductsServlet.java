@@ -3,6 +3,7 @@ package ru.akirakozov.sd.refactoring.servlet;
 import ru.akirakozov.sd.refactoring.db.Db;
 import ru.akirakozov.sd.refactoring.db.DbException;
 import ru.akirakozov.sd.refactoring.model.Product;
+import ru.akirakozov.sd.refactoring.utils.HTMLUtils;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -26,11 +27,13 @@ public class GetProductsServlet extends HttpServlet {
             return;
         }
 
-        response.getWriter().print("<html><body>\n");
-        response.getWriter().println(products.stream()
-                .map(product -> product.toString() + "</br>")
-                .collect(Collectors.joining("\n"));
-        response.getWriter().print("</body></html>\n");
+        HTMLUtils.writeHTMLDocument(
+                response.getWriter(),
+                List.of(),
+                products.stream()
+                        .map(product -> product.toString() + "</br>")
+                        .collect(Collectors.joining("\n"))
+        );
 
         response.setContentType("text/html");
         response.setStatus(HttpServletResponse.SC_OK);
