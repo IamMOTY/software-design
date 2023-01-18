@@ -1,0 +1,49 @@
+<html xmlns:th="http://www.thymeleaf.org" lang="">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table, th, td {
+          border: 1px solid black;
+          border-collapse: collapse;
+          padding: 0.5rem;
+        }
+    </style>
+    <title>Todo lists</title>
+</head>
+<body>
+
+<h3>Add new todo list</h3>
+<form th:object="${listToAdd}" method="POST" action="/add-list">
+    <p>Name: <label>
+        <input type="text" th:field="*{name}"/>
+    </label></p>
+    <p><input type="submit" value="Add"/></p>
+</form>
+
+<h3>Remove todo list</h3>
+<form th:object="${listToRemove}" method="POST" action="/remove-list">
+    <p>Id: <
+        input type="text" th:field="*{id}"/></p>
+    <p><input type="submit" value="Remove"/></p>
+</form>
+
+<th:block th:each="list : ${lists}">
+    <p>
+        <strong th:text="${list.getFirst().getId()}"></strong>.
+        <a th:href="@{'/get-list/' + ${list.getFirst().getId()}}" style="text-decoration:none;">
+            <strong th:text="${list.getFirst().getName()}"></strong>
+        </a>
+    </p>
+    <table style="border: 1px solid black;">
+        <th:block th:each="item: ${list.getSecond()}">
+            <tr>
+                <td th:text="${item.getName()}"></td>
+                <td th:text="${item.getStatus()}"></td>
+            </tr>
+        </th:block>
+    </table>
+</th:block>
+
+</body>
+</html>
