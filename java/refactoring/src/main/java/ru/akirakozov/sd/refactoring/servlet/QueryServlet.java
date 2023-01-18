@@ -1,5 +1,9 @@
 package ru.akirakozov.sd.refactoring.servlet;
 
+import ru.akirakozov.sd.refactoring.db.Db;
+import ru.akirakozov.sd.refactoring.db.DbException;
+import ru.akirakozov.sd.refactoring.model.Product;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,79 +21,44 @@ public class QueryServlet extends HttpServlet {
         PrintWriter writer = response.getWriter();
 
         try {
-            try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-                switch (command) {
-                    case "max" -> {
-                        Statement stmt = c.createStatement();
-                        ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT ORDER BY PRICE DESC LIMIT 1");
-                        response.getWriter().println("<html><body>");
-                        response.getWriter().println("<h1>Product with max price: </h1>");
-                        while (rs.next()) {
-                            String name = rs.getString("name");
-                            int price = rs.getInt("price");
-                            response.getWriter().println(name + "\t" + price + "</br>");
-                        }
-                        response.getWriter().println("</body></html>");
+            switch (command) {
+                case "max":
+                    Product mostExpensiveProduct = Db.selectLastProductInSorted("PRODUCT", "PRICE");
 
-                        rs.close();
-                        stmt.close();
-                    };
-                    case "min" -> {
-                        Statement stmt = c.createStatement();
-                        ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT ORDER BY PRICE LIMIT 1");
-                        response.getWriter().println("<html><body>");
-                        response.getWriter().println("<h1>Product with min price: </h1>");
+                    writer.print("<html><body>\n");
+                    List.of("Product with max price: ").forEach(header -> writer.println("<h1>" + header + "</h1>"));
+                    writer.println(mostExpensiveProduct.toString() + "</br>");
+                    writer.print("</body></html>\n");
+                    break;
+                case "min":
+                    Product cheapestProduct = Db.selectFirstProductInSorted("PRODUCT", "PRICE");
 
-                        while (rs.next()) {
-                            String name = rs.getString("name");
-                            int price = rs.getInt("price");
-                            response.getWriter().println(name + "\t" + price + "</br>");
-                        }
-                        response.getWriter().println("</body></html>");
+                    writer.print("<html><body>\n");
+                    List.of("Product with min price: ").forEach(header -> writer.println("<h1>" + header + "</h1>"));
+                    writer.println(cheapestProduct.toString() + "</br>");
+                    writer.print("</body></html>\n");
 
-                        rs.close();
-                        stmt.close();
-                    };
-                    case "sum" -> {
-                        Statement stmt = c.createStatement();
-                        ResultSet rs = stmt.executeQuery("SELECT SUM(price) FROM PRODUCT");
-                        response.getWriter().println("<html><body>");
-                        response.getWriter().println("Summary price: ");
-
-                        if (rs.next()) {
-                            response.getWriter().println(rs.getInt(1));
-                        }
-                        response.getWriter().println("</body></html>");
-
-                        rs.close();
-                        stmt.close();
-                    };
-                    case "count" -> {
-                        Statement stmt = c.createStatement();
-                        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM PRODUCT");
-                        response.getWriter().println("<html><body>");
-                        response.getWriter().println("Number of products: ");
-
-                        if (rs.next()) {
-                            response.getWriter().println(rs.getInt(1));
-                        }
-                        response.getWriter().println("</body></html>");
-
-                        rs.close();
-                        stmt.close();
-                    }
-                    default -> {
-                        response.getWriter().println("Unknown command: " + command);
-                    };
-                }
+                    break;
+                case "sum":
+                    int summaryPrice = Db.sum("PRODUCT", "PRICE");
+                    writer.print("<html><body>\n");
+                    writer.println("Summary price: \n" + summaryPrice);
+                    writer.print("</body></html>\n");
+                    break;
+                case "count":
+                    int numberOfProducts = Db.count("PRODUCT");
+                    writer.print("<html><body>\n");
+                    writer.println("Number of products: \n" + numberOfProducts);
+                    writer.print("</body></html>\n");
+                    break;
+                default:
+                    writer.println("Unknown command: " + command);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+
+            response.setContentType("text/html");
+            response.setStatus(HttpServletResponse.SC_OK);
+        } catch (DbException e) {
+            System.err.println(e.getMessage());
         }
-
-
-        response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
     }
 }
-

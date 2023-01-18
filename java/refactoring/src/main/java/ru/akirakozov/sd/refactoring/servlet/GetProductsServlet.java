@@ -1,5 +1,9 @@
 package ru.akirakozov.sd.refactoring.servlet;
 
+import ru.akirakozov.sd.refactoring.db.Db;
+import ru.akirakozov.sd.refactoring.db.DbException;
+import ru.akirakozov.sd.refactoring.model.Product;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -16,25 +20,17 @@ public class GetProductsServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         List<Product> products;
         try {
-            try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-                Statement stmt = c.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT");
-                response.getWriter().println("<html><body>");
-
-                while (rs.next()) {
-                    String  name = rs.getString("name");
-                    int price  = rs.getInt("price");
-                    response.getWriter().println(name + "\t" + price + "</br>");
-                }
-                response.getWriter().println("</body></html>");
-
-                rs.close();
-                stmt.close();
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            products = Db.selectAllProducts("PRODUCT");
+        } catch (DbException e) {
+            System.err.println(e.getMessage());
+            return;
         }
+
+        response.getWriter().print("<html><body>\n");
+        response.getWriter().println(products.stream()
+                .map(product -> product.toString() + "</br>")
+                .collect(Collectors.joining("\n"));
+        response.getWriter().print("</body></html>\n");
 
         response.setContentType("text/html");
         response.setStatus(HttpServletResponse.SC_OK);
